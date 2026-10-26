@@ -386,6 +386,142 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// SETTINGS MODAL — paste into App.jsx directly ABOVE the "TUTOR PANEL" section
+// Reuses your existing Toggle, VoiceSettingsPanel, A / S / V styles.
+// ════════════════════════════════════════════════════════════════════════════
+const buildContext = (c) =>
+  [c.instructions, ...c.files.map(f => f.text && `# ${f.name}\n${f.text}`)]
+    .filter(Boolean).join("\n\n").slice(0, 20000);
+
+function SettingsModal({
+  open, onClose, voiceSettings, updateVoice, currentLang,
+  autoPlay, onAutoPlayChange, voiceInputEnabled, onVoiceInput,
+  voiceOutputEnabled, onVoiceOutput, context, setContext,
+}) {
+  const [tab,  setTab]  = useState("voice");
+  const [drag, setDrag] = useState(false);
+  const pickRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const used = context.instructions.length + context.files.reduce((n, f) => n + f.text.length, 0);
+  const pct  = Math.min(100, Math.round(used / 20000 * 100));
+
+  const addFiles = async (list) => {
+    const added = [];
+    for (const f of Array.from(list)) {
+      const readable = /\.(txt|md|csv)$/i.test(f.name);
+      added.push({ id: `${Date.now()}-${f.name}`, name: f.name, size: f.size, text: readable ? (await f.text()).slice(0, 8000) : "" });
+    }
+    setContext({ ...context, files: [...context.files, ...added] });
+  };
+
+  const prefRow = (title, sub, on, onChange) => (
+    <div style={V.autoPlayRow}>
+      <div>
+        <div style={{ fontSize:"13px", fontWeight:600, color:"#e2e8f0", marginBottom:"2px" }}>{title}</div>
+        <div style={{ fontSize:"12px", color:"#6b7280" }}>{sub}</div>
+      </div>
+      <Toggle on={on} onChange={onChange} />
+    </div>
+  );
+
+  return (
+    <div style={M.overlay} onClick={onClose}>
+      <div style={M.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Settings">
+        <div style={M.head}>
+          <h2 style={M.title}>⚙️ Settings</h2>
+          <button style={M.close} onClick={onClose} aria-label="Close settings">✕</button>
+        </div>
+
+        <div style={A.tabRow}>
+          {[["voice", "🎙️ Voice"], ["context", "📚 Context & Files"]].map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{ ...A.tabBtn, ...(tab === id ? A.tabBtnActive : {}) }}>{label}</button>
+          ))}
+        </div>
+
+        {tab === "voice" && (
+          <>
+            {prefRow("Voice input", "Allow speaking questions into the microphone", voiceInputEnabled, onVoiceInput)}
+            {prefRow("Voice output", "Play spoken answers from the assistant", voiceOutputEnabled, onVoiceOutput)}
+            <VoiceSettingsPanel
+              settings={voiceSettings} onChange={updateVoice} currentLang={currentLang}
+              autoPlay={autoPlay && voiceOutputEnabled} onAutoPlayChange={onAutoPlayChange}
+            />
+          </>
+        )}
+
+        {tab === "context" && (
+          <>
+            <p style={M.sub}>Add notes and study material. The tutor uses them when it answers.</p>
+
+            <div style={M.meterTrack} aria-label={`Context used ${pct}%`}>
+              <div style={{ ...M.meterFill, width: pct + "%", background: pct > 85 ? "#ef4444" : "linear-gradient(90deg,#7c3aed,#60a5fa)" }} />
+            </div>
+            <div style={M.meterLabel}>{pct}% of context used</div>
+
+            <label style={{ ...V.label, display:"block", margin:"18px 0 8px" }}>Instructions</label>
+            <textarea
+              style={{ ...S.textarea, padding:"12px 16px", minHeight:"96px", fontSize:"0.95rem" }}
+              placeholder="Example: Explain like I am in class 10. Use simple Marathi examples."
+              value={context.instructions}
+              onChange={(e) => setContext({ ...context, instructions: e.target.value })}
+            />
+
+            <label style={{ ...V.label, display:"block", margin:"18px 0 8px" }}>Files ({context.files.length})</label>
+            <div
+              style={{ ...A.dropZone, padding:"26px 20px", ...(drag ? { borderColor:"#a78bfa", background:"rgba(124,58,237,0.1)" } : {}) }}
+              onClick={() => pickRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={(e) => { e.preventDefault(); setDrag(false); addFiles(e.dataTransfer.files); }}
+            >
+              <div style={{ fontWeight:600, marginBottom:"4px" }}>Drop files here or click to browse</div>
+              <div style={{ fontSize:"12px", color:"#9ca3af" }}>TXT, MD and CSV are read as context</div>
+              <input ref={pickRef} type="file" multiple accept=".txt,.md,.csv,.pdf" style={{ display:"none" }} onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+            </div>
+
+            {context.files.length === 0 ? (
+              <p style={{ ...M.sub, marginTop:"12px" }}>No files yet. Add lecture notes or a chapter to get answers based on them.</p>
+            ) : context.files.map((f) => (
+              <div key={f.id} style={A.previewRow}>
+                <span style={{ fontSize:"28px" }}>📄</span>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.name}</div>
+                  <div style={{ fontSize:"12px", color:"#9ca3af", marginTop:"2px" }}>
+                    {(f.size / 1024).toFixed(1)} KB{f.text ? "" : " · text not readable, name only"}
+                  </div>
+                </div>
+                <button style={A.removeBtn} onClick={() => setContext({ ...context, files: context.files.filter((x) => x.id !== f.id) })}>✕ Remove</button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const M = {
+  overlay:   { position:"fixed", inset:0, background:"rgba(8,6,24,0.72)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:"16px" },
+  modal:     { width:"100%", maxWidth:"660px", maxHeight:"90vh", overflowY:"auto", background:"linear-gradient(135deg,#1a1640,#24243e)", border:"1px solid rgba(255,255,255,0.14)", borderRadius:"20px", padding:"26px", color:"#f0f0f0", boxShadow:"0 24px 70px rgba(0,0,0,0.6)" },
+  head:      { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"18px" },
+  title:     { margin:0, fontSize:"1.3rem", fontWeight:700, color:"#e2e8f0" },
+  close:     { background:"none", border:"1px solid rgba(255,255,255,0.15)", borderRadius:"8px", color:"#9ca3af", cursor:"pointer", padding:"5px 10px", fontFamily:"inherit" },
+  sub:       { fontSize:"13px", color:"#9ca3af", margin:"0 0 14px", lineHeight:1.5 },
+  meterTrack:{ height:"6px", borderRadius:"3px", background:"rgba(255,255,255,0.12)", overflow:"hidden" },
+  meterFill: { height:"100%", borderRadius:"3px", transition:"width 0.3s" },
+  meterLabel:{ fontSize:"11px", color:"#6b7280", marginTop:"6px", fontFamily:"monospace" },
+};
+
+// ════════════════════════════════════════════════════════════════════════════
 // TUTOR PANEL
 // ════════════════════════════════════════════════════════════════════════════
 const EMPTY_RESPONSE = { explanation:"", summary:"", quiz:[], audioUrl:null, audioB64:null, audioError:"", audioLoading:false, provider:"", error:"", loading:false };
@@ -395,7 +531,9 @@ function TutorPanel() {
   const [inputLang,     setInputLang]     = useState("english");
   const [listening,     setListening]     = useState(false);
   const [interimText,   setInterimText]   = useState("");
-  const [showVoice,     setShowVoice]     = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [context, setContextState] = useState(() => { try { return { instructions:"", files:[], ...JSON.parse(localStorage.getItem("personalAI.context") || "{}") }; } catch { return { instructions:"", files:[] }; } });
+  const setContext = (next) => { setContextState(next); try { localStorage.setItem("personalAI.context", JSON.stringify(next)); } catch {} };
   const [autoPlay,      setAutoPlay]      = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.autoPlay") ?? "true"); } catch { return true; } });
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.inputEnabled") ?? "true"); } catch { return true; } });
   const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.outputEnabled") ?? "true"); } catch { return true; } });
@@ -427,7 +565,7 @@ function TutorPanel() {
     try {
       const response = await fetch("http://localhost:8000/ask", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ question: q, ...voiceSettings }),
+        body: JSON.stringify({ question: q, ...voiceSettings,context:buildContext(context) }),
       });
       if (!response.ok) { setRes({ ...EMPTY_RESPONSE, error:`Server error: ${response.status}` }); return; }
       const data = await response.json();
@@ -548,10 +686,19 @@ function TutorPanel() {
         </div>
       )}
 
-      <button style={T.voiceToggle} onClick={() => setShowVoice(p => !p)}>
-        🎙️ Voice Settings {showVoice ? "▲" : "▼"}
-        {(voiceSettings.pitch!==0 || voiceSettings.rate!==0 || voiceSettings.emphasis!=="none" || voiceSettings.voice_id) && <span style={T.activeDot} />}
-      </button>
+      <button style={T.voiceToggle} onClick={() => setShowSettings(true)}>
+  ⚙️ Settings
+  {(voiceSettings.pitch!==0 || voiceSettings.rate!==0 || voiceSettings.emphasis!=="none" || voiceSettings.voice_id) && <span style={T.activeDot} />}
+</button>
+
+<SettingsModal
+  open={showSettings} onClose={() => setShowSettings(false)}
+  voiceSettings={voiceSettings} updateVoice={updateVoice} currentLang={inputLang}
+  autoPlay={autoPlay} onAutoPlayChange={updateAutoPlay}
+  voiceInputEnabled={voiceInputEnabled} onVoiceInput={updateVoiceInput}
+  voiceOutputEnabled={voiceOutputEnabled} onVoiceOutput={updateVoiceOutput}
+  context={context} setContext={setContext}
+/>
 
       {showVoice && (
         <>

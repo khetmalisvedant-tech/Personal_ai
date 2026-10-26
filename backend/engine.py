@@ -37,6 +37,7 @@ def _call(prompt: str, max_tokens: int = 300, temperature: float = 0.3) -> str:
             "model":   MODEL,
             "prompt":  prompt,
             "stream":  False,
+            "think":  False,
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,

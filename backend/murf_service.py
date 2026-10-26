@@ -27,8 +27,10 @@ SAFE_DEFAULTS = {
 # These are the minimal known-valid IDs from Murf's public docs
 FALLBACK_CATALOG = {
     "english": [
-        {"id": "en-US-natalie", "name": "Natalie (US, Female)"},
-        {"id": "en-US-ken",     "name": "Ken (US, Male)"},
+        {"id": "en-US-natalie", "name": "Natalie", "gender": "female", "accent": "US English", "style": "Warm · clear · conversational"},
+        {"id": "en-US-ken",     "name": "Ken",     "gender": "male",   "accent": "US English", "style": "Steady · confident · natural"},
+        {"id": "en-US-joey",    "name": "Joey",    "gender": "male",   "accent": "US English", "style": "Friendly · relaxed · expressive"},
+        {"id": "en-US-julia",   "name": "Julia",   "gender": "female", "accent": "US English", "style": "Bright · smooth · engaging"},
     ],
     "hindi": [
         {"id": "hi-IN-amit",    "name": "Amit (Male)"},
@@ -73,7 +75,14 @@ def _fetch_murf_voices() -> dict:
             vname  = v.get("displayName") or v.get("name") or vid
             locale = (v.get("locale") or v.get("language") or "").lower()
 
+            gender = (v.get("gender") or v.get("voiceGender") or "").lower()
             entry = {"id": vid, "name": vname}
+            if gender:
+                entry["gender"] = gender
+            if v.get("accent"):
+                entry["accent"] = v.get("accent")
+            if v.get("style"):
+                entry["style"] = v.get("style")
 
             if locale.startswith("hi"):
                 catalog["hindi"].append(entry)

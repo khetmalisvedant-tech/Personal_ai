@@ -177,22 +177,18 @@ function Toggle({ on, onChange }) {
 // ════════════════════════════════════════════════════════════════════════════
 const DEFAULT_VOICE_CATALOG = {
   english:[
-    {id:"en-US-natalie", name:"Natalie (US, Female)"},
-    {id:"en-US-ken",     name:"Ken (US, Male)"},
-    {id:"en-US-joey",    name:"Joey (US, Male)"},
-    {id:"en-US-julia",   name:"Julia (US, Female)"},
-    {id:"en-UK-hazel",   name:"Hazel (UK, Female)"},
-    {id:"en-UK-theo",    name:"Theo (UK, Male)"},
-    {id:"en-IN-isha",    name:"Isha (IN, Female)"},
-    {id:"en-IN-aryan",   name:"Aryan (IN, Male)"},
+    {id:"en-US-natalie", name:"Natalie", gender:"female", accent:"US English", style:"Warm · clear · conversational"},
+    {id:"en-US-ken",     name:"Ken",     gender:"male",   accent:"US English", style:"Steady · confident · natural"},
+    {id:"en-US-joey",    name:"Joey",    gender:"male",   accent:"US English", style:"Friendly · relaxed · expressive"},
+    {id:"en-US-julia",   name:"Julia",   gender:"female", accent:"US English", style:"Bright · smooth · engaging"},
   ],
   hindi:[
-    {id:"hi-IN-amit",  name:"Amit (Male)"},
-    {id:"hi-IN-divya", name:"Divya (Female)"},
+    {id:"hi-IN-amit",  name:"Amit",  gender:"male",   accent:"Hindi", style:"Clear · steady"},
+    {id:"hi-IN-divya", name:"Divya", gender:"female", accent:"Hindi", style:"Warm · clear"},
   ],
   marathi:[
-    {id:"hi-IN-amit",  name:"Amit (Male)"},
-    {id:"hi-IN-divya", name:"Divya (Female)"},
+    {id:"hi-IN-amit",  name:"Amit",  gender:"male",   accent:"Hindi voice · Marathi text support varies", style:"Clear · steady"},
+    {id:"hi-IN-divya", name:"Divya", gender:"female", accent:"Hindi voice · Marathi text support varies", style:"Warm · clear"},
   ],
 };
 
@@ -216,9 +212,17 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
       .then(r => r.json())
       .then(d => {
         if (d.voices) {
-          setCatalog(d.voices);
-          const lv = d.voices[currentLang] || d.voices.english || [];
-          if (lv[0]) onChange("voice_id", lv[0].id);
+          setCatalog(prev => {
+            const merged = {};
+            for (const lang of ["english", "hindi", "marathi"]) {
+              const base = prev[lang] || DEFAULT_VOICE_CATALOG[lang] || [];
+              const live = d.voices[lang] || [];
+              const byId = new Map(live.map(v => [v.id, { ...v }]));
+              merged[lang] = base.map(v => ({ ...v, ...(byId.get(v.id) || {}) }));
+              for (const v of live) if (!merged[lang].some(item => item.id === v.id)) merged[lang].push(v);
+            }
+            return merged;
+          });
         }
       })
       .catch(() => {
@@ -276,15 +280,33 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         <Toggle on={autoPlay} onChange={onAutoPlayChange} />
       </div>
 
-      {/* Voice select */}
-      <div style={V.row}>
-        <label style={V.label}>Voice</label>
-        <select value={settings.voice_id || langVoices[0]?.id || ""} onChange={e => onChange("voice_id", e.target.value)} style={V.select}>
-          {langVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-          {settings.voice_id && !langVoices.find(v => v.id === settings.voice_id) && (
-            <option value={settings.voice_id}>🧬 Cloned: {settings.voice_id}</option>
-          )}
-        </select>
+      {/* Voice selection cards */}
+      <div style={{ marginBottom:"18px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"9px", gap:"10px" }}>
+          <label style={V.label}>Choose your voice</label>
+          <span style={{fontSize:"10px", letterSpacing:".08em", color:"#a5b4fc", textTransform:"uppercase"}}>{currentLang === "english" ? "4 curated voices" : `${langVoices.length} language voices`}</span>
+        </div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))", gap:"10px"}}>
+          {langVoices.map((v, index) => {
+            const selected = (settings.voice_id || langVoices[0]?.id) === v.id;
+            const gender = (v.gender || (/natalie|julia|hazel|isha|divya/i.test(`${v.id} ${v.name}`) ? "female" : "male")).toLowerCase();
+            const female = gender.includes("f");
+            return <button key={v.id} type="button" onClick={() => onChange("voice_id", v.id)} aria-pressed={selected}
+              style={{textAlign:"left", padding:"13px", borderRadius:"14px", cursor:"pointer", color:"#e5e7eb", border:selected?"1px solid #a78bfa":"1px solid rgba(148,163,184,.22)", background:selected?"linear-gradient(135deg,rgba(124,58,237,.24),rgba(30,41,59,.88))":"rgba(15,23,42,.62)", boxShadow:selected?"0 0 0 2px rgba(167,139,250,.12)":"none", transition:"all .18s ease"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+                <div style={{width:"38px",height:"38px",borderRadius:"12px",display:"grid",placeItems:"center",fontSize:"19px",background:female?"rgba(236,72,153,.16)":"rgba(59,130,246,.16)"}}>{female?"♀":"♂"}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:"14px",fontWeight:700}}>{v.name || v.id}</div>
+                  <div style={{fontSize:"10px",color:"#94a3b8",marginTop:"3px"}}>{v.accent || (currentLang === "english" ? "English" : currentLang)} · {female?"Female voice":"Male voice"}</div>
+                </div>
+                <div style={{width:"18px",height:"18px",borderRadius:"50%",border:selected?"5px solid #a78bfa":"1px solid #64748b",flexShrink:0}} />
+              </div>
+              <div style={{fontSize:"11px",color:"#a8b2c5",marginTop:"10px",lineHeight:1.45}}>{v.style || (index===0?"Warm and clear":index===1?"Steady and confident":"Conversational delivery")}</div>
+            </button>;
+          })}
+        </div>
+        {currentLang === "english" && <div style={{fontSize:"11px",color:"#8490a5",marginTop:"8px",lineHeight:1.5}}>Natalie and Julia are female voice options; Ken and Joey are male voice options. Availability depends on your Murf account and API voice catalog.</div>}
+        {settings.voice_id && !langVoices.find(v => v.id === settings.voice_id) && <div style={V.cloneActive}>🧬 Active custom voice: <code>{settings.voice_id}</code></div>}
       </div>
 
       {/* Cloned voice */}
@@ -305,6 +327,17 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
             )}
           </div>
         )}
+      </div>
+
+      {/* Natural voice presets */}
+      <div style={{ marginBottom:"18px" }}>
+        <label style={{ ...V.label, display:"block", marginBottom:"8px" }}>Speaking style</label>
+        <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
+          <button onClick={() => { onChange("pitch", 0); onChange("rate", -5); onChange("emphasis", "moderate"); }} style={V.emphBtn}>🌿 Natural</button>
+          <button onClick={() => { onChange("pitch", -3); onChange("rate", -10); onChange("emphasis", "reduced"); }} style={V.emphBtn}>☕ Calm</button>
+          <button onClick={() => { onChange("pitch", 2); onChange("rate", 3); onChange("emphasis", "strong"); }} style={V.emphBtn}>✨ Expressive</button>
+        </div>
+        <div style={{fontSize:"11px", color:"#6b7280", marginTop:"7px", lineHeight:1.5}}>Presets adjust pitch, speed, and emphasis. Results depend on the selected voice and TTS provider.</div>
       </div>
 
       {/* Pitch */}
@@ -363,15 +396,24 @@ function TutorPanel() {
   const [listening,     setListening]     = useState(false);
   const [interimText,   setInterimText]   = useState("");
   const [showVoice,     setShowVoice]     = useState(false);
-  const [autoPlay,      setAutoPlay]      = useState(true);
-  const [voiceSettings, setVoiceSettings] = useState({ voice_id:null, pitch:0, rate:0, emphasis:"none" });
+  const [autoPlay,      setAutoPlay]      = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.autoPlay") ?? "true"); } catch { return true; } });
+  const [voiceInputEnabled, setVoiceInputEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.inputEnabled") ?? "true"); } catch { return true; } });
+  const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.outputEnabled") ?? "true"); } catch { return true; } });
+  const [voiceSettings, setVoiceSettings] = useState(() => { try { return { voice_id:null, pitch:0, rate:0, emphasis:"none", ...JSON.parse(localStorage.getItem("personalAI.voice.settings") || "{}") }; } catch { return { voice_id:null, pitch:0, rate:0, emphasis:"none" }; } });
   const [res, setRes]                     = useState(EMPTY_RESPONSE);
 
   const recRef       = useRef(null);
   const finalRef     = useRef("");
   const silenceTimer = useRef(null);
 
-  const updateVoice = (key, val) => setVoiceSettings(p => ({ ...p, [key]: val }));
+  const updateVoice = (key, val) => setVoiceSettings(p => {
+    const next = { ...p, [key]: val };
+    try { localStorage.setItem("personalAI.voice.settings", JSON.stringify(next)); } catch {}
+    return next;
+  });
+  const updateAutoPlay = (value) => { setAutoPlay(value); try { localStorage.setItem("personalAI.voice.autoPlay", JSON.stringify(value)); } catch {} };
+  const updateVoiceInput = (value) => { setVoiceInputEnabled(value); try { localStorage.setItem("personalAI.voice.inputEnabled", JSON.stringify(value)); } catch {} };
+  const updateVoiceOutput = (value) => { setVoiceOutputEnabled(value); try { localStorage.setItem("personalAI.voice.outputEnabled", JSON.stringify(value)); } catch {} };
 
   const handleQuestionChange = (e) => {
     const val = e.target.value;
@@ -431,6 +473,7 @@ function TutorPanel() {
   const startVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert("Speech recognition not supported. Please use Chrome."); return; }
+    if (!voiceInputEnabled) { setRes(p => ({ ...p, error:"Voice input is disabled. Enable it in Voice Settings first." })); return; }
     if (listening) { stopAndSend(); return; }
 
     const rec = new SR();
@@ -489,7 +532,7 @@ function TutorPanel() {
           {listening && interimText && <div style={T.interimBadge}>💬 {interimText}</div>}
         </div>
         <div style={S.btnGroup}>
-          <button style={{ ...S.btn, ...S.btnVoice, background: listening ? "#dc2626" : "#7c3aed" }} onClick={startVoice} disabled={loading}>
+          <button style={{ ...S.btn, ...S.btnVoice, background: listening ? "#dc2626" : "#7c3aed", opacity: voiceInputEnabled ? 1 : 0.45 }} onClick={startVoice} disabled={loading || !voiceInputEnabled}>
             {listening ? "⏹ Stop & Send" : "🎤 Speak"}
           </button>
           <button style={{ ...S.btn, ...S.btnAsk }} onClick={() => sendQuestion(question)} disabled={loading || !question.trim()}>
@@ -501,7 +544,7 @@ function TutorPanel() {
       {listening && (
         <div style={T.listeningBar}>
           <span style={T.listeningDot} />
-          Listening… speak your full question. Will auto-send after 2s of silence, or press ⏹ Stop &amp; Send.
+          Listening… speak your full question. Will auto-send after 4.5s of silence, or press ⏹ Stop &amp; Send.
         </div>
       )}
 
@@ -511,7 +554,25 @@ function TutorPanel() {
       </button>
 
       {showVoice && (
-        <VoiceSettingsPanel settings={voiceSettings} onChange={updateVoice} currentLang={inputLang} autoPlay={autoPlay} onAutoPlayChange={setAutoPlay} />
+        <>
+          <div style={V.panel}>
+            <div style={V.panelHeader}>⚙️ Voice Preferences</div>
+            <div style={V.autoPlayRow}>
+              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Voice input</div><div style={{fontSize:"12px",color:"#6b7280"}}>Allow speaking questions into the microphone</div></div>
+              <Toggle on={voiceInputEnabled} onChange={updateVoiceInput} />
+            </div>
+            <div style={V.autoPlayRow}>
+              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Voice output</div><div style={{fontSize:"12px",color:"#6b7280"}}>Play spoken answers from the assistant</div></div>
+              <Toggle on={voiceOutputEnabled} onChange={updateVoiceOutput} />
+            </div>
+            <div style={V.autoPlayRow}>
+              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Auto-play answers</div><div style={{fontSize:"12px",color:"#6b7280"}}>Automatically play audio when a response arrives</div></div>
+              <Toggle on={autoPlay} onChange={updateAutoPlay} />
+            </div>
+            <div style={{fontSize:"11px",color:"#6b7280"}}>Preferences are saved in this browser and restored next time.</div>
+          </div>
+          <VoiceSettingsPanel settings={voiceSettings} onChange={updateVoice} currentLang={inputLang} autoPlay={autoPlay && voiceOutputEnabled} onAutoPlayChange={updateAutoPlay} />
+        </>
       )}
 
       {error && <div style={S.error}>⚠️ {error}</div>}
@@ -546,7 +607,7 @@ function TutorPanel() {
           )}
 
           {/* ── Audio output ─────────────────────────────────────────────── */}
-          {(audioUrl || audioB64 || audioLoading) && (
+          {voiceOutputEnabled && (audioUrl || audioB64 || audioLoading) && (
             <div style={S.section}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"12px" }}>
                 <h2 style={{ ...S.sectionTitle, margin:0 }}>🔊 Listen</h2>
@@ -560,7 +621,7 @@ function TutorPanel() {
                 audioError={audioError}
                 audioLoading={audioLoading}
                 provider={provider}
-                autoPlay={autoPlay}
+                autoPlay={autoPlay && voiceOutputEnabled}
               />
             </div>
           )}

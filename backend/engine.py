@@ -4,7 +4,7 @@ import json
 from memory import get_history
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL      = "llama3.2"
+MODEL      = "gemma4:e4b"
 
 MARATHI_KEYWORDS = {
     "आहे","आणि","काय","कसे","मला","तुम्ही","आपण",

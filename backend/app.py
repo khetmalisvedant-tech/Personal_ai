@@ -1,15 +1,20 @@
-from fastapi import APIRouter
+
+from fastapi import FastAPI
 from pydantic import BaseModel
 from core import process_query
 
-router = APIRouter()
+app = FastAPI(
+    title="Personal AI API",
+    description="Personal AI tutor powered by Gemma 4",
+    version="1.0.0",
+)
 
 
 class QuestionRequest(BaseModel):
     question: str
 
 
-@router.post("/ask")
+@app.post("/ask")
 async def ask(data: QuestionRequest):
     question = data.question.strip()
 

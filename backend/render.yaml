@@ -1,0 +1,57 @@
+# render.yaml
+# ────────────
+# Drop this in your repo root. On Render, click "New Blueprint" and point at this file.
+# All environment variables marked sync: false must be filled in the Render dashboard.
+
+services:
+  - type: web
+    name: ai-tutor-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free                          # upgrade to starter ($7/mo) for always-on
+    healthCheckPath: /
+
+    envVars:
+      # ── Your existing API keys ─────────────────────────────────────────────
+      - key: ANTHROPIC_API_KEY
+        sync: false                     # paste in Render dashboard → Environment
+
+      - key: MURF_API_KEY
+        sync: false
+
+      # ── Auth (Clerk) ───────────────────────────────────────────────────────
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false                     # from clerk.com → API Keys
+
+      - key: CLERK_SECRET_KEY
+        sync: false
+
+      - key: CLERK_JWKS_URL
+        sync: false
+        # Format: https://<YOUR_CLERK_DOMAIN>.clerk.accounts.dev/.well-known/jwks.json
+        # Find your domain in Clerk dashboard → Domains
+
+      # ── Stripe ────────────────────────────────────────────────────────────
+      - key: STRIPE_SECRET_KEY
+        sync: false                     # starts with sk_live_ or sk_test_
+
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false                     # whsec_xxx — add AFTER deploying (see below)
+
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false                     # price_xxx from Stripe dashboard → Products
+
+      # ── App config ────────────────────────────────────────────────────────
+      - key: FRONTEND_URL
+        sync: false                     # e.g. https://ai-tutor.vercel.app
+
+      # ── Database (Render auto-injects this if you add a Postgres add-on) ──
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-tutor-db
+          property: connectionString
+
+databases:
+  - name: ai-tutor-db
+    plan: free                          # free Postgres on Render (90-day, then $7/mo)

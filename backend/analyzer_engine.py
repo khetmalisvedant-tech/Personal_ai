@@ -4,8 +4,8 @@ analyzer_engine.py  (v3 — streaming)
 • stream_analyze()  → generator that yields text chunks as Ollama produces them
 • analyze_text/image/file() kept for non-streaming callers (fallback)
 
-Text & files  → llama3.2
-Images        → llava:13b
+Text & files  → gemma4:e4b
+Images        → gemma4:e4b
 
 PDF support   → pip install pypdf
 """
@@ -17,8 +17,8 @@ import requests
 from engine import detect_language
 
 OLLAMA_URL   = "http://localhost:11434/api/generate"
-TEXT_MODEL   = "llama3.2"
-VISION_MODEL = "llava:13b"
+TEXT_MODEL   = "gemma4:e4b"
+VISION_MODEL = "gemma4:e4b"
 
 
 # ── Strip JSON wrapper if model misbehaves ────────────────────────────────────

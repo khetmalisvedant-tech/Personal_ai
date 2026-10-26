@@ -28,7 +28,7 @@ function Skeleton({ width="100%", height="16px", style={} }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// AUDIO PLAYER — polished custom player, replaces native <audio controls>
+// AUDIO PLAYER
 // ════════════════════════════════════════════════════════════════════════════
 function AudioPlayer({ audioUrl, audioB64, audioError, audioLoading, provider, autoPlay }) {
   const ref            = useRef(null);
@@ -113,32 +113,23 @@ function AudioPlayer({ audioUrl, audioB64, audioError, audioLoading, provider, a
         style={{ display:"none" }}
       />
       <div style={AP.player}>
-        {/* Play / Pause */}
         <button style={{ ...AP.playBtn, ...(playing ? AP.playBtnActive : {}) }} onClick={togglePlay} title={playing ? "Pause" : "Play"}>
           {playing
             ? <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="4" height="12" rx="1"/><rect x="8" y="1" width="4" height="12" rx="1"/></svg>
             : <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1.5l9 5.5-9 5.5V1.5z"/></svg>
           }
         </button>
-
-        {/* Progress track */}
         <div style={AP.trackWrap} onClick={seek} title="Seek">
           <div style={AP.track}>
             <div style={{ ...AP.fill, width: pct + "%" }} />
           </div>
         </div>
-
-        {/* Time */}
         <span style={AP.time}>{fmt(progress)} / {fmt(duration)}</span>
-
-        {/* Replay */}
         <button style={AP.iconBtn} onClick={replay} title="Replay from start">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/>
           </svg>
         </button>
-
-        {/* Provider badge */}
         {provider && <span style={AP.badge}>{provider === "murf" ? "Murf" : "gTTS"}</span>}
       </div>
     </div>
@@ -269,9 +260,14 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
 
   return (
     <div style={V.panel}>
-      <div style={V.panelHeader}>🎙️ Voice Settings</div>
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"12px",marginBottom:"18px",flexWrap:"wrap"}}>
+        <div>
+          <div style={{fontSize:"15px",fontWeight:750,color:"#f1f5f9",letterSpacing:"-.01em",marginBottom:"5px"}}>🎙️ Voice experience</div>
+          <div style={{fontSize:"12px",color:"#94a3b8",lineHeight:1.55}}>Choose a voice and fine-tune how your assistant speaks.</div>
+        </div>
+        <span style={{fontSize:"10px",fontWeight:700,letterSpacing:".08em",color:"#c4b5fd",textTransform:"uppercase",padding:"5px 9px",borderRadius:"999px",border:"1px solid rgba(167,139,250,.25)",background:"rgba(124,58,237,.13)"}}>Personalize</span>
+      </div>
 
-      {/* Auto-play row */}
       <div style={V.autoPlayRow}>
         <div>
           <div style={{ fontSize:"13px", fontWeight:600, color:"#e2e8f0", marginBottom:"2px" }}>Auto-play audio</div>
@@ -280,7 +276,6 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         <Toggle on={autoPlay} onChange={onAutoPlayChange} />
       </div>
 
-      {/* Voice selection cards */}
       <div style={{ marginBottom:"18px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"9px", gap:"10px" }}>
           <label style={V.label}>Choose your voice</label>
@@ -292,7 +287,7 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
             const gender = (v.gender || (/natalie|julia|hazel|isha|divya/i.test(`${v.id} ${v.name}`) ? "female" : "male")).toLowerCase();
             const female = gender.includes("f");
             return <button key={v.id} type="button" onClick={() => onChange("voice_id", v.id)} aria-pressed={selected}
-              style={{textAlign:"left", padding:"13px", borderRadius:"14px", cursor:"pointer", color:"#e5e7eb", border:selected?"1px solid #a78bfa":"1px solid rgba(148,163,184,.22)", background:selected?"linear-gradient(135deg,rgba(124,58,237,.24),rgba(30,41,59,.88))":"rgba(15,23,42,.62)", boxShadow:selected?"0 0 0 2px rgba(167,139,250,.12)":"none", transition:"all .18s ease"}}>
+              style={{textAlign:"left", padding:"15px", minHeight:"112px", borderRadius:"16px", cursor:"pointer", color:"#e5e7eb", border:selected?"1px solid rgba(196,181,253,.9)":"1px solid rgba(148,163,184,.2)", background:selected?"linear-gradient(145deg,rgba(124,58,237,.28),rgba(30,41,59,.82))":"linear-gradient(145deg,rgba(15,23,42,.76),rgba(15,23,42,.48))", boxShadow:selected?"0 8px 24px rgba(76,29,149,.18),inset 0 1px 0 rgba(255,255,255,.07)":"inset 0 1px 0 rgba(255,255,255,.025)", transition:"all .18s ease"}}>
               <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
                 <div style={{width:"38px",height:"38px",borderRadius:"12px",display:"grid",placeItems:"center",fontSize:"19px",background:female?"rgba(236,72,153,.16)":"rgba(59,130,246,.16)"}}>{female?"♀":"♂"}</div>
                 <div style={{flex:1,minWidth:0}}>
@@ -309,7 +304,6 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         {settings.voice_id && !langVoices.find(v => v.id === settings.voice_id) && <div style={V.cloneActive}>🧬 Active custom voice: <code>{settings.voice_id}</code></div>}
       </div>
 
-      {/* Cloned voice */}
       <div style={{ marginBottom:"14px" }}>
         <button style={V.cloneToggleBtn} onClick={() => setShowClone(p => !p)}>
           🧬 {showClone ? "Hide" : "Use Cloned Voice ID"}
@@ -329,7 +323,6 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         )}
       </div>
 
-      {/* Natural voice presets */}
       <div style={{ marginBottom:"18px" }}>
         <label style={{ ...V.label, display:"block", marginBottom:"8px" }}>Speaking style</label>
         <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
@@ -340,21 +333,18 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         <div style={{fontSize:"11px", color:"#6b7280", marginTop:"7px", lineHeight:1.5}}>Presets adjust pitch, speed, and emphasis. Results depend on the selected voice and TTS provider.</div>
       </div>
 
-      {/* Pitch */}
       <div style={V.row}>
         <label style={V.label}>Pitch</label>
         <input type="range" min={-50} max={50} value={settings.pitch} onChange={e => onChange("pitch", Number(e.target.value))} style={sliderStyle(settings.pitch)} />
         <span style={V.val}>{settings.pitch > 0 ? `+${settings.pitch}` : settings.pitch}</span>
       </div>
 
-      {/* Speed */}
       <div style={V.row}>
         <label style={V.label}>Speed</label>
         <input type="range" min={-50} max={50} value={settings.rate} onChange={e => onChange("rate", Number(e.target.value))} style={sliderStyle(settings.rate)} />
         <span style={V.val}>{settings.rate > 0 ? `+${settings.rate}` : settings.rate}</span>
       </div>
 
-      {/* Emphasis */}
       <div style={{ marginBottom:"18px" }}>
         <label style={{ ...V.label, display:"block", marginBottom:"8px" }}>Emphasis</label>
         <div style={{ display:"flex", gap:"8px" }}>
@@ -367,7 +357,6 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         </div>
       </div>
 
-      {/* Real-time preview */}
       <div style={V.previewBox}>
         <label style={{ ...V.label, display:"block", marginBottom:"8px" }}>🔊 Preview voice</label>
         <textarea style={V.previewInput} value={previewText} onChange={e => setPreviewText(e.target.value)} rows={2} placeholder="Type a sentence to preview…" />
@@ -377,7 +366,6 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
         <AudioPlayer audioUrl={previewAudio.url} audioB64={previewAudio.b64} audioError={previewAudio.error} audioLoading={previewAudio.loading} autoPlay={true} />
       </div>
 
-      {/* Reset */}
       <button style={V.resetBtn} onClick={() => { onChange("voice_id", null); onChange("pitch", 0); onChange("rate", 0); onChange("emphasis","none"); setCloneId(""); }}>
         ↺ Reset to Defaults
       </button>
@@ -386,8 +374,7 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// SETTINGS MODAL — paste into App.jsx directly ABOVE the "TUTOR PANEL" section
-// Reuses your existing Toggle, VoiceSettingsPanel, A / S / V styles.
+// SETTINGS MODAL
 // ════════════════════════════════════════════════════════════════════════════
 const buildContext = (c) =>
   [c.instructions, ...c.files.map(f => f.text && `# ${f.name}\n${f.text}`)]
@@ -437,7 +424,10 @@ function SettingsModal({
     <div style={M.overlay} onClick={onClose}>
       <div style={M.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Settings">
         <div style={M.head}>
-          <h2 style={M.title}>⚙️ Settings</h2>
+          <div>
+            <h2 style={M.title}>Settings</h2>
+            <p style={{margin:"5px 0 0",fontSize:"12px",lineHeight:1.5,color:"#94a3b8"}}>Personalize your tutor, voice, and learning context.</p>
+          </div>
           <button style={M.close} onClick={onClose} aria-label="Close settings">✕</button>
         </div>
 
@@ -510,10 +500,10 @@ function SettingsModal({
 }
 
 const M = {
-  overlay:   { position:"fixed", inset:0, background:"rgba(8,6,24,0.72)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:"16px" },
-  modal:     { width:"100%", maxWidth:"660px", maxHeight:"90vh", overflowY:"auto", background:"linear-gradient(135deg,#1a1640,#24243e)", border:"1px solid rgba(255,255,255,0.14)", borderRadius:"20px", padding:"26px", color:"#f0f0f0", boxShadow:"0 24px 70px rgba(0,0,0,0.6)" },
-  head:      { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"18px" },
-  title:     { margin:0, fontSize:"1.3rem", fontWeight:700, color:"#e2e8f0" },
+  overlay:   { position:"fixed", inset:0, background:"rgba(5,4,18,0.78)", backdropFilter:"blur(10px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:"clamp(10px,3vw,24px)" },
+  modal:     { width:"100%", maxWidth:"760px", maxHeight:"92vh", overflowY:"auto", background:"radial-gradient(ellipse at top left,rgba(124,58,237,.14),transparent 45%),linear-gradient(145deg,#17152f,#201e3b 55%,#191a31)", border:"1px solid rgba(255,255,255,0.14)", borderRadius:"22px", padding:"clamp(18px,3vw,30px)", color:"#f0f0f0", boxShadow:"0 28px 90px rgba(0,0,0,0.65)" },
+  head:      { display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", marginBottom:"20px", paddingBottom:"16px", borderBottom:"1px solid rgba(255,255,255,0.08)" },
+  title:     { margin:0, fontSize:"1.4rem", fontWeight:750, letterSpacing:"-.025em", color:"#f1f5f9" },
   close:     { background:"none", border:"1px solid rgba(255,255,255,0.15)", borderRadius:"8px", color:"#9ca3af", cursor:"pointer", padding:"5px 10px", fontFamily:"inherit" },
   sub:       { fontSize:"13px", color:"#9ca3af", margin:"0 0 14px", lineHeight:1.5 },
   meterTrack:{ height:"6px", borderRadius:"3px", background:"rgba(255,255,255,0.12)", overflow:"hidden" },
@@ -531,7 +521,7 @@ function TutorPanel() {
   const [inputLang,     setInputLang]     = useState("english");
   const [listening,     setListening]     = useState(false);
   const [interimText,   setInterimText]   = useState("");
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings,  setShowSettings]  = useState(false);
   const [context, setContextState] = useState(() => { try { return { instructions:"", files:[], ...JSON.parse(localStorage.getItem("personalAI.context") || "{}") }; } catch { return { instructions:"", files:[] }; } });
   const setContext = (next) => { setContextState(next); try { localStorage.setItem("personalAI.context", JSON.stringify(next)); } catch {} };
   const [autoPlay,      setAutoPlay]      = useState(() => { try { return JSON.parse(localStorage.getItem("personalAI.voice.autoPlay") ?? "true"); } catch { return true; } });
@@ -565,7 +555,7 @@ function TutorPanel() {
     try {
       const response = await fetch("http://localhost:8000/ask", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ question: q, ...voiceSettings,context:buildContext(context) }),
+        body: JSON.stringify({ question: q, ...voiceSettings, context: buildContext(context) }),
       });
       if (!response.ok) { setRes({ ...EMPTY_RESPONSE, error:`Server error: ${response.status}` }); return; }
       const data = await response.json();
@@ -578,7 +568,6 @@ function TutorPanel() {
           const inner = JSON.parse(explanation);
           explanation = inner.explanation || inner.result || explanation;
         } catch {
-          // partial JSON — extract explanation field with regex
           const m = explanation.match(/"explanation"\s*:\s*"((?:[^"\\]|\\.)*)"/);
           if (m) explanation = m[1].replace(/\\n/g, " ").replace(/\\"/g, '"');
         }
@@ -611,7 +600,7 @@ function TutorPanel() {
   const startVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert("Speech recognition not supported. Please use Chrome."); return; }
-    if (!voiceInputEnabled) { setRes(p => ({ ...p, error:"Voice input is disabled. Enable it in Voice Settings first." })); return; }
+    if (!voiceInputEnabled) { setRes(p => ({ ...p, error:"Voice input is disabled. Enable it in Settings first." })); return; }
     if (listening) { stopAndSend(); return; }
 
     const rec = new SR();
@@ -658,6 +647,24 @@ function TutorPanel() {
 
   return (
     <>
+      <div style={T.toolbar}>
+        <div style={T.toolbarHint}>Personalize your learning experience</div>
+        <button
+          type="button"
+          style={T.voiceToggle}
+          onClick={() => setShowSettings(true)}
+          aria-label="Open settings"
+          title="Open settings"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z" stroke="currentColor" strokeWidth="1.8" />
+            <path d="m19.4 13.5 1.1.9-1.5 2.6-1.4-.5a7.7 7.7 0 0 1-1.5.9l-.2 1.5h-3l-.3-1.5a7.7 7.7 0 0 1-1.5-.9l-1.4.5-1.5-2.6 1.1-.9a7.4 7.4 0 0 1 0-1.8l-1.1-.9 1.5-2.6 1.4.5a7.7 7.7 0 0 1 1.5-.9l.3-1.5h3l.2 1.5a7.7 7.7 0 0 1 1.5.9l1.4-.5 1.5 2.6-1.1.9a7.4 7.4 0 0 1 0 1.8Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" transform="translate(-1.2 -1.2) scale(1.08)" />
+          </svg>
+          <span>Settings</span>
+          {(voiceSettings.pitch!==0 || voiceSettings.rate!==0 || voiceSettings.emphasis!=="none" || voiceSettings.voice_id) && <span style={T.activeDot} />}
+        </button>
+      </div>
+
       <div style={S.inputRow}>
         <div style={S.textareaWrapper}>
           <span style={S.langBadge}>{LANG_LABEL[inputLang]}</span>
@@ -682,45 +689,18 @@ function TutorPanel() {
       {listening && (
         <div style={T.listeningBar}>
           <span style={T.listeningDot} />
-          Listening… speak your full question. Will auto-send after 4.5s of silence, or press ⏹ Stop &amp; Send.
+          Listening… speak your full question. It sends after 2 seconds of silence, or press ⏹ Stop &amp; Send.
         </div>
       )}
 
-      <button style={T.voiceToggle} onClick={() => setShowSettings(true)}>
-  ⚙️ Settings
-  {(voiceSettings.pitch!==0 || voiceSettings.rate!==0 || voiceSettings.emphasis!=="none" || voiceSettings.voice_id) && <span style={T.activeDot} />}
-</button>
-
-<SettingsModal
-  open={showSettings} onClose={() => setShowSettings(false)}
-  voiceSettings={voiceSettings} updateVoice={updateVoice} currentLang={inputLang}
-  autoPlay={autoPlay} onAutoPlayChange={updateAutoPlay}
-  voiceInputEnabled={voiceInputEnabled} onVoiceInput={updateVoiceInput}
-  voiceOutputEnabled={voiceOutputEnabled} onVoiceOutput={updateVoiceOutput}
-  context={context} setContext={setContext}
-/>
-
-      {showVoice && (
-        <>
-          <div style={V.panel}>
-            <div style={V.panelHeader}>⚙️ Voice Preferences</div>
-            <div style={V.autoPlayRow}>
-              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Voice input</div><div style={{fontSize:"12px",color:"#6b7280"}}>Allow speaking questions into the microphone</div></div>
-              <Toggle on={voiceInputEnabled} onChange={updateVoiceInput} />
-            </div>
-            <div style={V.autoPlayRow}>
-              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Voice output</div><div style={{fontSize:"12px",color:"#6b7280"}}>Play spoken answers from the assistant</div></div>
-              <Toggle on={voiceOutputEnabled} onChange={updateVoiceOutput} />
-            </div>
-            <div style={V.autoPlayRow}>
-              <div><div style={{fontSize:"13px",fontWeight:600,color:"#e2e8f0",marginBottom:"2px"}}>Auto-play answers</div><div style={{fontSize:"12px",color:"#6b7280"}}>Automatically play audio when a response arrives</div></div>
-              <Toggle on={autoPlay} onChange={updateAutoPlay} />
-            </div>
-            <div style={{fontSize:"11px",color:"#6b7280"}}>Preferences are saved in this browser and restored next time.</div>
-          </div>
-          <VoiceSettingsPanel settings={voiceSettings} onChange={updateVoice} currentLang={inputLang} autoPlay={autoPlay && voiceOutputEnabled} onAutoPlayChange={updateAutoPlay} />
-        </>
-      )}
+      <SettingsModal
+        open={showSettings} onClose={() => setShowSettings(false)}
+        voiceSettings={voiceSettings} updateVoice={updateVoice} currentLang={inputLang}
+        autoPlay={autoPlay} onAutoPlayChange={updateAutoPlay}
+        voiceInputEnabled={voiceInputEnabled} onVoiceInput={updateVoiceInput}
+        voiceOutputEnabled={voiceOutputEnabled} onVoiceOutput={updateVoiceOutput}
+        context={context} setContext={setContext}
+      />
 
       {error && <div style={S.error}>⚠️ {error}</div>}
 
@@ -753,7 +733,6 @@ function TutorPanel() {
             </div>
           )}
 
-          {/* ── Audio output ─────────────────────────────────────────────── */}
           {voiceOutputEnabled && (audioUrl || audioB64 || audioLoading) && (
             <div style={S.section}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"12px" }}>
@@ -873,7 +852,6 @@ function AnalyzerPanel() {
   const [error,     setError]     = useState("");
   const [copied,    setCopied]    = useState(false);
   const [autoPlay,  setAutoPlay]  = useState(true);
-  // Each analysis gets its own audio state object — no shared ref confusion
   const [audio, setAudio] = useState({ url:null, b64:null, error:"", loading:false, provider:"" });
 
   const readAsDataUrl = (file) => new Promise((res,rej) => { const r=new FileReader(); r.onload=(e)=>res(e.target.result); r.onerror=()=>rej(); r.readAsDataURL(file); });
@@ -939,7 +917,6 @@ function AnalyzerPanel() {
         setResult(accumulated);
       }
 
-      // ── Generate audio once streaming is complete ─────────────────────────
       if (accumulated.trim()) {
         setAudio(a => ({ ...a, loading:true }));
         try {
@@ -1009,7 +986,6 @@ function AnalyzerPanel() {
 
       <div style={A.divider} />
 
-      {/* Auto-play toggle */}
       <div style={V.autoPlayRow}>
         <div>
           <div style={{ fontSize:"13px", fontWeight:600, color:"#e2e8f0", marginBottom:"2px" }}>Auto-play audio after analysis</div>
@@ -1061,7 +1037,6 @@ function AnalyzerPanel() {
         </div>
       )}
 
-      {/* ── Audio — appears once streaming is done ───────────────────────── */}
       {!streaming && result && (
         <div style={{ ...S.section, marginTop:"16px" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"12px" }}>
@@ -1096,6 +1071,18 @@ export default function App() {
         @keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
         @keyframes spin{to{transform:rotate(360deg)}}
         *{box-sizing:border-box}
+        html{color-scheme:dark;scroll-behavior:smooth}
+        body{margin:0;background:#0f0c29}
+        button,input,textarea,select{font:inherit}
+        button{ -webkit-tap-highlight-color:transparent }
+        button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
+        [role=dialog] button{transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+        [role=dialog] button:hover:not(:disabled){filter:brightness(1.08)}
+        [role=dialog] button:active:not(:disabled){transform:translateY(1px)}
+        [role=dialog] button:disabled{opacity:.55;cursor:not-allowed}
+        @media(max-width:640px){
+          [role=dialog]{padding:18px!important;border-radius:16px!important}
+        }
         input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer}
         input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#7c3aed;box-shadow:0 0 6px rgba(124,58,237,0.6);cursor:pointer}
         select option{background:#1e1b4b;color:#f0f0f0}
@@ -1124,11 +1111,11 @@ export default function App() {
 // STYLES
 // ════════════════════════════════════════════════════════════════════════════
 const S = {
-  page:{minHeight:"100vh",width:"100vw",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"40px 16px",fontFamily:"'Segoe UI',sans-serif"},
-  card:{background:"rgba(255,255,255,0.05)",backdropFilter:"blur(16px)",borderRadius:"20px",border:"1px solid rgba(255,255,255,0.12)",padding:"36px",width:"100%",maxWidth:"720px",color:"#f0f0f0",boxShadow:"0 24px 60px rgba(0,0,0,0.5)"},
-  header:{textAlign:"center",marginBottom:"24px"},
-  icon:{fontSize:"48px"},
-  title:{fontSize:"2rem",fontWeight:700,margin:"8px 0 4px",background:"linear-gradient(90deg,#a78bfa,#60a5fa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"},
+  page:{minHeight:"100vh",width:"100%",background:"radial-gradient(ellipse at 15% 0%,rgba(124,58,237,.22),transparent 42%),linear-gradient(135deg,#0f0c29 0%,#211c4d 48%,#17172f 100%)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"clamp(18px,4vw,40px) 16px",fontFamily:"'Segoe UI',Inter,system-ui,sans-serif"},
+  card:{background:"linear-gradient(145deg,rgba(255,255,255,0.065),rgba(255,255,255,0.035))",backdropFilter:"blur(18px)",borderRadius:"22px",border:"1px solid rgba(255,255,255,0.12)",padding:"clamp(18px,4vw,36px)",width:"100%",maxWidth:"760px",color:"#f0f0f0",boxShadow:"0 28px 80px rgba(0,0,0,0.42)"},
+  header:{textAlign:"center",marginBottom:"26px"},
+  icon:{fontSize:"46px",filter:"drop-shadow(0 8px 18px rgba(124,58,237,.28))"},
+  title:{fontSize:"clamp(1.65rem,4vw,2.15rem)",fontWeight:750,letterSpacing:"-.035em",margin:"8px 0 5px",background:"linear-gradient(90deg,#c4b5fd 0%,#93c5fd 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"},
   subtitle:{color:"#9ca3af",fontSize:"0.95rem",margin:0},
   inputRow:{display:"flex",flexDirection:"column",gap:"12px"},
   textareaWrapper:{position:"relative",width:"100%"},
@@ -1175,9 +1162,9 @@ const A = {
 };
 
 const V = {
-  panel:{background:"rgba(124,58,237,0.07)",border:"1px solid rgba(124,58,237,0.25)",borderRadius:"14px",padding:"20px",marginTop:"12px",marginBottom:"16px"},
+  panel:{background:"linear-gradient(145deg,rgba(124,58,237,.095),rgba(255,255,255,.025))",border:"1px solid rgba(167,139,250,.22)",borderRadius:"18px",padding:"clamp(14px,2.5vw,22px)",marginTop:"14px",marginBottom:"16px",boxShadow:"inset 0 1px 0 rgba(255,255,255,.035)"},
   panelHeader:{fontSize:"13px",fontWeight:700,color:"#a78bfa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"16px"},
-  autoPlayRow:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"18px",padding:"10px 14px",background:"rgba(255,255,255,0.04)",borderRadius:"10px",border:"1px solid rgba(255,255,255,0.08)"},
+  autoPlayRow:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"14px",marginBottom:"18px",padding:"13px 15px",background:"linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.025))",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.085)"},
   row:{display:"flex",alignItems:"center",gap:"12px",marginBottom:"16px"},
   label:{fontSize:"13px",color:"#9ca3af",fontWeight:600,minWidth:"58px"},
   select:{flex:1,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",color:"#f0f0f0",padding:"8px 12px",fontSize:"13px",outline:"none",fontFamily:"inherit",cursor:"pointer"},
@@ -1195,7 +1182,6 @@ const V = {
   previewBox:{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"10px",padding:"14px",marginBottom:"14px"},
   previewInput:{width:"100%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",color:"#f0f0f0",padding:"10px 12px",fontSize:"13px",outline:"none",lineHeight:1.6,fontFamily:"inherit",resize:"vertical"},
   resetBtn:{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",color:"#6b7280",fontSize:"12px",padding:"5px 14px",cursor:"pointer",fontFamily:"inherit",width:"100%"},
-  // Toggle switch
   toggleBtn:{width:"40px",height:"22px",borderRadius:"11px",border:"none",background:"rgba(255,255,255,0.12)",cursor:"pointer",position:"relative",flexShrink:0,transition:"background 0.2s",padding:0},
   toggleBtnOn:{background:"#7c3aed"},
   toggleThumb:{width:"16px",height:"16px",borderRadius:"50%",background:"#fff",position:"absolute",top:"3px",left:"3px",transition:"left 0.2s",pointerEvents:"none"},
@@ -1203,7 +1189,9 @@ const V = {
 };
 
 const T = {
-  voiceToggle:{background:"rgba(124,58,237,0.1)",border:"1px solid rgba(124,58,237,0.25)",borderRadius:"10px",color:"#a78bfa",fontSize:"13px",fontWeight:600,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",marginTop:"12px",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",position:"relative"},
+  toolbar:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"12px",marginBottom:"14px",padding:"10px 12px",borderRadius:"14px",border:"1px solid rgba(167,139,250,0.18)",background:"linear-gradient(100deg,rgba(124,58,237,0.10),rgba(59,130,246,0.06))",flexWrap:"wrap"},
+  toolbarHint:{fontSize:"12px",color:"#a5b4fc",letterSpacing:"0.01em"},
+  voiceToggle:{background:"linear-gradient(135deg,#7c3aed,#5b5bd6)",border:"1px solid rgba(196,181,253,0.38)",boxShadow:"0 5px 18px rgba(91,58,190,0.28)",borderRadius:"10px",color:"#fff",fontSize:"13px",fontWeight:650,padding:"9px 14px",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"8px",position:"relative",whiteSpace:"nowrap",transition:"transform .18s ease,box-shadow .18s ease"},
   activeDot:{width:"7px",height:"7px",borderRadius:"50%",background:"#34d399",display:"inline-block",marginLeft:"4px"},
   listeningBar:{marginTop:"10px",padding:"10px 16px",background:"rgba(124,58,237,0.12)",border:"1px solid rgba(124,58,237,0.3)",borderRadius:"10px",fontSize:"13px",color:"#c4b5fd",display:"flex",alignItems:"center",gap:"10px",lineHeight:1.5},
   listeningDot:{width:"10px",height:"10px",borderRadius:"50%",background:"#dc2626",flexShrink:0},

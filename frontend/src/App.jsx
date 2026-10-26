@@ -199,7 +199,12 @@ function VoiceSettingsPanel({ settings, onChange, currentLang, autoPlay, onAutoP
   const [previewAudio, setPreviewAudio] = useState({ url:null, b64:null, error:"", loading:false });
 
   useEffect(() => {
-    fetch("http://localhost:8000/voices")
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  fetch(`${API_URL}/ask`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ prompt:"What are the available voices?" }),
+  })
       .then(r => r.json())
       .then(d => {
         if (d.voices) {

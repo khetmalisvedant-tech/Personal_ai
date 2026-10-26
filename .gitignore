@@ -1,7 +1,5 @@
 venv/
-__pycache__/
-*.pyc
-memory.db
+api_key.txt
 .env
 node_modules/
 dist/
